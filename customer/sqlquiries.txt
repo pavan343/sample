@@ -1,0 +1,61 @@
+CREATE TABLE `sample`.`identification` (
+  `customerID` INT NOT NULL,
+  `FirstName` VARCHAR(45) NOT NULL,
+  `LastName` VARCHAR(45) NULL,
+  `Title` VARCHAR(45) NULL,
+  `Gender` VARCHAR(45) NULL,
+  PRIMARY KEY (`customerID`),
+  UNIQUE INDEX `customerID_UNIQUE` (`customerID` ASC) VISIBLE);
+
+
+CREATE TABLE `sample`.`address` (
+  `customerID` INT NULL,
+  `housenumber` INT NOT NULL,
+  `street` VARCHAR(45) NULL,
+  `city` VARCHAR(45) NULL,
+  `state` VARCHAR(45) NULL,
+  `zip` INT NULL,
+  PRIMARY KEY (`housenumber`),
+  UNIQUE INDEX `housenumber_UNIQUE` (`housenumber` ASC) VISIBLE,
+  INDEX `customerid_idx` (`customerID` ASC) VISIBLE,
+  CONSTRAINT `customerid`
+    FOREIGN KEY (`customerID`)
+    REFERENCES `sample`.`identification` (`customerID`)
+    ON DELETE CASCADE
+    ON UPDATE NO ACTION);
+
+
+
+CREATE TABLE `sample`.`communication` (
+  `type` VARCHAR(35) NULL,
+  `value` VARCHAR(45) NULL,
+  `preffered` TINYINT NULL,
+  `customerid` INT NULL,
+  INDEX `customerid_idx` (`customerid` ASC) VISIBLE,
+  CONSTRAINT `customerid`
+    FOREIGN KEY (`customerid2`)
+    REFERENCES `sample`.`identification` (`customerID`)
+    ON DELETE CASCADE
+    ON UPDATE NO ACTION);
+
+
+
+
+USE `sample`;
+DROP procedure IF EXISTS `insertCustomer`;
+
+DELIMITER $$
+USE `sample`$$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `insertCustomer`(IN FIRSTNAME varchar(45), IN LASTNAME varchar(45), IN TITLE varchar(45), IN GENDER varchar(45), IN HOUSENUMB numeric, IN STREET varchar(45), IN CITY varchar(45), IN STATE varchar(45), IN ZIP numeric, IN tpe varchar(45), IN val varchar(45), IN preffered boolean, inout STATUS int)
+BEGIN
+INSERT INTO sample.identification(FirstName,LastName,Title,Gender) VALUES (FIRSTNAME,LASTNAME,TITLE,GENDER);
+INSERT INTO sample.address(customerid,housenumber,street,city,state,zip) VALUES (last_insert_id(),HOUSENUMB,STREET,CITY,STATE,ZIP);
+INSERT INTO sample.communication(type,value,preffered) VALUES(last_insert_id(),tpe,val,preffered);
+SET STATUS =1;
+END$$
+
+DELIMITER ;
+
+
+
+
