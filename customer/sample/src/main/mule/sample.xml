@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="c78242b6-c1bb-4684-9805-d1fca8016fb4" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="a81818ec-6f19-4902-a595-3dec13563a3e" >
+		<db:my-sql-connection host="localhost" port="3307" user="root" password="babbu343" database="sample" />
+	</db:config>
+	<flow name="sampleFlow2" doc:id="aeec8f60-e4ed-48b7-8b39-834f030a96b5" >
+		<http:listener doc:name="Listener" doc:id="8e529b4e-6bb5-466b-a6f9-a4b331a9f373" config-ref="HTTP_Listener_config" path="api/v1/customers" allowedMethods="GET"/>
+		<db:select doc:name="Select" doc:id="39c90243-66b6-4385-acb2-7005e0396eaf" config-ref="Database_Config">
+			<db:sql>SELECT i.customerID,i.FirstName,i.LastName,i.Title,i.Gender,e.housenumber,e.street,e.city,e.state,e.zip
+FROM sample.identification AS i
+INNER JOIN sample.address AS e
+ON e.customerid = i.customerID;</db:sql>
+		</db:select>
+		<ee:transform doc:name="Transform Message" doc:id="09670d78-a8f7-449d-9f53-1b78e0046c57" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+
+payload
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="sampleFlow" doc:id="c43b90f4-8f18-468e-9396-cb7bdb4bf96b" >
+		<http:listener doc:name="Listener" doc:id="868448d4-ca81-4be9-8508-51a8fcbfc585" config-ref="HTTP_Listener_config" path="/api/v1/customers" allowedMethods="POST"/>
+		<db:stored-procedure doc:name="Stored procedure" doc:id="e8b4aa2e-00f0-4930-a054-b5290353448c" config-ref="Database_Config">
+			<db:sql >call sample.insertCustomer(:firstname,:lastname,:titel,:gender,:houseno,:street,:city,:state,:zip,:STATUS);</db:sql>
+			<db:input-parameters ><![CDATA[#[{'firstname':payload.Identification.FirstName,
+  'lastname':payload.Identification.LastName,
+  'title':payload.Indentification.Title,
+  'gender' : payload.Identification.Gender,
+  'houseno':payload.Address[0].number,
+  'street':payload.Address[0].street,
+  'city':payload.Address[0].City,
+  'state':payload.Address[0].State,
+   'zip':payload.Address[0].zipcode,
+  
+}]]]></db:input-parameters>
+		</db:stored-procedure>
+		<ee:transform doc:name="Transform Message" doc:id="2eb987fe-bcd9-4edf-a083-4fa5e6a9ab4c" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+
+	payload.status
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="fdabdb35-7ae3-4e83-b010-cbf16beab686" />
+		</error-handler>
+	</flow>
+	<flow name="sampleFlow1" doc:id="defb91b0-9de5-4cea-8910-28a697a9dcca" >
+		<http:listener doc:name="Listener" doc:id="eda35bfa-f23c-4252-aede-ba39573c80d5" config-ref="HTTP_Listener_config" path="api/v1/customers/{customerId}" allowedMethods="GET"/>
+		<db:select doc:name="Select" doc:id="e0930ba1-707a-41ca-8206-072e05846680" config-ref="Database_Config">
+					<db:sql>SELECT i.customerID,i.FirstName,i.LastName,i.Title,i.Gender,e.housenumber,e.street,e.city,e.state,e.zip
+FROM sample.identification AS i
+INNER JOIN sample.address AS e
+ON e.customerid = i.customerID AND i.customerID= :customerId</db:sql>
+			<db:input-parameters ><![CDATA[#[{'customerId' : attributes.uriParams.customerId}]]]></db:input-parameters>
+				</db:select>
+		<ee:transform doc:name="Transform Message" doc:id="41e14d02-9e12-4f77-9c61-52c6d2aacaa8">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+
+payload
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>
