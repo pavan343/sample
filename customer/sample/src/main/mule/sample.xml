@@ -13,7 +13,7 @@ http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/fil
 	<db:config name="Database_Config" doc:name="Database Config" doc:id="a81818ec-6f19-4902-a595-3dec13563a3e" >
 		<db:my-sql-connection host="localhost" port="3307" user="root" password="babbu343" database="sample" />
 	</db:config>
-	<flow name="sampleFlow2" doc:id="aeec8f60-e4ed-48b7-8b39-834f030a96b5" >
+	<flow name="selectcustomers" doc:id="aeec8f60-e4ed-48b7-8b39-834f030a96b5" >
 		<http:listener doc:name="Listener" doc:id="8e529b4e-6bb5-466b-a6f9-a4b331a9f373" config-ref="HTTP_Listener_config" path="api/v1/customers" allowedMethods="GET"/>
 		<db:select doc:name="Select" doc:id="39c90243-66b6-4385-acb2-7005e0396eaf" config-ref="Database_Config">
 			<db:sql>SELECT i.customerID,i.FirstName,i.LastName,i.Title,i.Gender,e.housenumber,e.street,e.city,e.state,e.zip
@@ -32,7 +32,7 @@ payload
 			</ee:message>
 		</ee:transform>
 	</flow>
-	<flow name="sampleFlow" doc:id="c43b90f4-8f18-468e-9396-cb7bdb4bf96b" >
+	<flow name="updatecustomers" doc:id="c43b90f4-8f18-468e-9396-cb7bdb4bf96b" >
 		<http:listener doc:name="Listener" doc:id="868448d4-ca81-4be9-8508-51a8fcbfc585" config-ref="HTTP_Listener_config" path="/api/v1/customers" allowedMethods="POST"/>
 		<db:stored-procedure doc:name="Stored procedure" doc:id="e8b4aa2e-00f0-4930-a054-b5290353448c" config-ref="Database_Config">
 			<db:sql >call sample.insertCustomer(:firstname,:lastname,:titel,:gender,:houseno,:street,:city,:state,:zip,:STATUS);</db:sql>
@@ -58,11 +58,8 @@ output application/json
 ]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
-		<error-handler >
-			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="fdabdb35-7ae3-4e83-b010-cbf16beab686" />
-		</error-handler>
 	</flow>
-	<flow name="sampleFlow1" doc:id="defb91b0-9de5-4cea-8910-28a697a9dcca" >
+	<flow name="selectallwithcustomerId" doc:id="defb91b0-9de5-4cea-8910-28a697a9dcca" >
 		<http:listener doc:name="Listener" doc:id="eda35bfa-f23c-4252-aede-ba39573c80d5" config-ref="HTTP_Listener_config" path="api/v1/customers/{customerId}" allowedMethods="GET"/>
 		<db:select doc:name="Select" doc:id="e0930ba1-707a-41ca-8206-072e05846680" config-ref="Database_Config">
 					<db:sql>SELECT i.customerID,i.FirstName,i.LastName,i.Title,i.Gender,e.housenumber,e.street,e.city,e.state,e.zip
@@ -82,10 +79,10 @@ payload
 			</ee:message>
 		</ee:transform>
 	</flow>
-	<flow name="sampleFlow3" doc:id="29f80634-3766-4c95-9004-2cd0128f3e79" >
-		<http:listener doc:name="Listener" doc:id="f555f2da-f197-44cf-a792-a08ed0053a65" config-ref="HTTP_Listener_config" path="/api/v1/customers/{customerId}/address"/>
+	<flow name="selectaddresswithcustomerID" doc:id="29f80634-3766-4c95-9004-2cd0128f3e79" >
+		<http:listener doc:name="Listener" doc:id="f555f2da-f197-44cf-a792-a08ed0053a65" config-ref="HTTP_Listener_config" path="/api/v1/customers/{customerId}/address" allowedMethods="GET"/>
 		<db:select doc:name="Select" doc:id="dd555a3f-45fb-453a-8a82-af7e6c973d9a" config-ref="Database_Config">
-			<db:sql >select * from sample.address  a where a.customerid=:customerid</db:sql>
+			<db:sql >select * from sample.address  a where a.customerid=:customerid;</db:sql>
 			<db:input-parameters ><![CDATA[#[{'customerid':attributes.uriParams.customerID}]]]></db:input-parameters>
 		</db:select>
 		<ee:transform doc:name="Transform Message" doc:id="1c6ccd2e-5265-4abe-8158-b0e7d20b2299" >
@@ -96,5 +93,12 @@ output application/json
 payload]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
+	</flow>
+	<flow name="sampleFlow" doc:id="75a6f538-80b4-405b-8b4a-a8e5e6ef8e6d" >
+		<http:listener doc:name="Listener" doc:id="860637e3-aa5e-4dfb-9cd9-1aaa419785a8" config-ref="HTTP_Listener_config" path="/api/v1/customers/{customerId}/address" allowedMethods="DELETE"/>
+		<db:delete doc:name="Delete" doc:id="e199f1a6-362f-4a27-ab4e-c5aebbc84773" config-ref="Database_Config">
+			<db:sql >DELETE FROM sample.address a where a.customerid= :customerid;</db:sql>
+			<db:input-parameters ><![CDATA[#[{'customerid':attributes.uriParams.customerID}]]]></db:input-parameters>
+		</db:delete>
 	</flow>
 </mule>
