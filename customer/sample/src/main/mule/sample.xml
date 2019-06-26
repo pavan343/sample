@@ -82,4 +82,19 @@ payload
 			</ee:message>
 		</ee:transform>
 	</flow>
+	<flow name="sampleFlow3" doc:id="29f80634-3766-4c95-9004-2cd0128f3e79" >
+		<http:listener doc:name="Listener" doc:id="f555f2da-f197-44cf-a792-a08ed0053a65" config-ref="HTTP_Listener_config" path="/api/v1/customers/{customerId}/address"/>
+		<db:select doc:name="Select" doc:id="dd555a3f-45fb-453a-8a82-af7e6c973d9a" config-ref="Database_Config">
+			<db:sql >select * from sample.address  a where a.customerid=:customerid</db:sql>
+			<db:input-parameters ><![CDATA[#[{'customerid':attributes.uriParams.customerID}]]]></db:input-parameters>
+		</db:select>
+		<ee:transform doc:name="Transform Message" doc:id="1c6ccd2e-5265-4abe-8158-b0e7d20b2299" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
 </mule>
