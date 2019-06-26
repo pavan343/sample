@@ -1,0 +1,12 @@
+#%RAML 1.0 Library
+uses:
+  individual: individual.raml
+  address: address.raml
+  contact: contactDetails.raml
+
+types:
+  customer:
+     properties:
+          identity:            individual.Identification
+          adresses: address.address
+          contacts: contact.Communication

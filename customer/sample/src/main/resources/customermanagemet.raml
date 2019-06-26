@@ -1,0 +1,136 @@
+#%RAML 1.0
+uses:
+  customer: customer.raml
+  indentity: individual.raml
+  address: address.raml
+  contacts: contactDetails.raml
+
+title: Customer management REST Services API
+version: v1
+protocols: [ HTTPS ]
+baseUri: http://rest-api.ms3.com/api/{version}
+mediaType: application/json
+securedBy: basicAuth
+securitySchemes:
+  basicAuth:
+    description: |
+      Each request must contain the headers necessary for
+      basic authentication
+    type: Basic Authentication
+    describedBy:
+      headers:
+        Authorization:
+          description: |
+            Used to send the Base64 encoded "username:password"
+            credentials
+            type: string
+      responses:
+        401:
+          description: |
+            Unauthorized. Either the provided username and password
+            combination is invalid, or the user is not allowed to
+            access the content provided by the requested URL.
+
+types:
+  customer: customer.customer
+  identity: indentity.Identification
+  address: address.address  
+  contacts: contacts.Communication
+  
+ 
+  
+resourceTypes:
+  collections:
+    usage: Use this resourceType to represent a collection of customer
+    description: A collection of <<resourcePathName>>
+    get:
+      description: |
+        Get all <<resourcePathName|!pluralize>>,
+        optionally filtered
+      is: [ hasResponseCollection: { typeName: <<typeName>> } ]
+    post:
+      description: |
+        Create a new <<resourcePathName|!singularize>>
+      is: [ hasRequestItem: { typeName: <<typeName>> } ]
+  entity:
+    usage: Use this resourceType to represent any single customer entity
+    description: A single <<typeName>>
+    get:
+      description: Get a <<typeName>>
+      is: [ hasResponseItem: { typeName: <<typeName>> }, hasNotFound ]
+    put:
+      description: Update a <<typeName>>
+      is: [ hasRequestItem: { typeName: <<typeName>> }, hasResponseItem: { typeName: <<typeName>> }, hasNotFound ]
+    delete:
+      description: Delete a <<typeName>>
+      is: [ hasNotFound ]
+      responses:
+        204:
+  
+    
+    
+traits:
+  hasRequestItem:
+    body:
+      application/json:
+        type: <<typeName>>
+  hasResponseItem:
+    responses:
+      200:
+        body:
+          application/json:
+            type: <<typeName>>
+  hasResponseCollection:
+    responses:
+      200:
+        body:
+          application/json:
+            type: <<typeName>>[]
+  hasNotFound:
+    responses:
+      404:
+        body:
+          application/json:
+            type: 
+            example: 
+/customers:
+  type: { collections: { typeName: customer } }
+  get:
+    queryParameters:
+      firstName?: string
+      lastName?: string
+      DOB?: string
+
+  /{customerId}:
+    type: { entity: { typeName: customer } }
+     
+    /identity:
+     get:
+      description: Get an personal info of a customer
+      is: [ hasResponseItem: { typeName: <<typeName>> }, hasNotFound ]
+     put:
+      description: Update personal info of a customer
+      is: [ hasRequestItem: { typeName: <<typeName>> }, hasResponseItem: { typeName: <<typeName>> }, hasNotFound ]
+    /address:
+      type: { collections: { typeName: address } }
+      get:
+        queryParameters:
+          houseNumber?: number
+          houseType?: string
+     
+      /{houseNumber}:
+        type: { entity: {typeName : address}  }
+    /contacts:
+        type: { collections: { typeName: contacts } }
+        get:
+         queryParameters:
+          type?: string
+          preffered?: boolean
+        /{contact}:
+          type: { entity: {typeName : contacts} }
+
+        
+        
+     
+        
+
